@@ -144,3 +144,14 @@ the DEB to `~/Downloads/gitapps` without overwriting existing files. Size and, w
 provided, GitHub's SHA-256 digest are checked. Installation remains manual; the
 command is printed. Noninteractive checks only print a link. Version 0.2.0 needs
 one manual upgrade to obtain this behavior. No periodic/background checks run.
+
+## Fedora RPM
+
+A standalone RPM builder is included: `python3 scripts/build_rpm.py`. Build it on
+Fedora with rpm-build and PyInstaller available. The `Fedora standalone RPM`
+workflow builds and installation-tests on Fedora 43 and uploads an Actions artifact.
+It has not yet been run/verified; no RPM release asset is currently published.
+After obtaining a compatible RPM, install with `sudo dnf install ./gitapps-0.3.0-1.x86_64.rpm`.
+Python is bundled; native-library RPM requirements remain enabled. RPM package
+version discovery and interactive RPM self-download are not implemented yet;
+CLI version discovery and release links remain available.

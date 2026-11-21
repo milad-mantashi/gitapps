@@ -1,0 +1,26 @@
+name: Fedora standalone RPM
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: fedora:43
+    steps:
+      - run: dnf install -y git python3 python3-pip python3-devel rpm-build binutils gcc findutils
+      - uses: actions/checkout@v4
+      - run: python3 -m venv /tmp/build-env
+      - run: /tmp/build-env/bin/pip install pyinstaller==6.22.3
+      - run: python3 -m unittest discover -s tests -v
+      - run: /tmp/build-env/bin/python scripts/build_rpm.py
+      - run: |
+          dnf install -y ./dist/gitapps-*.rpm
+          /usr/bin/gitapps --version
+          /usr/bin/gitapps --help
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gitapps-fedora-rpm
+          path: dist/*.rpm
