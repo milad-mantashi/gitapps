@@ -1,4 +1,11 @@
 {
-  "localsend/localsend": {"current": null},
-  "Happ-proxy/happ-desktop": {"current": null}
+  "localsend/localsend": {
+    "current": null
+  },
+  "Happ-proxy/happ-desktop": {
+    "current": null
+  },
+  "milad-mantashi/gitapps": {
+    "current": null
+  }
 }

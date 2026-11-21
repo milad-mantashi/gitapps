@@ -134,3 +134,13 @@ Ubuntu 22.04 for amd64 and test installation; its first successful run must be
 verified before claiming support for that environment. The locally tested binary
 was built on Ubuntu 26.04 (glibc 2.43), not on Ubuntu 22.04. DEB version detection uses the
 system's dpkg-query; CLI detection uses the installed application's own command.
+
+## Self-update checks (0.3.0)
+
+GitApps itself is tracked by default. `gitapps check` compares the running version
+with its latest release. When a newer release has exactly one architecture-matching
+DEB, interactive terminals ask `Download the GitApps update? [y/N]`. Acceptance saves
+the DEB to `~/Downloads/gitapps` without overwriting existing files. Size and, when
+provided, GitHub's SHA-256 digest are checked. Installation remains manual; the
+command is printed. Noninteractive checks only print a link. Version 0.2.0 needs
+one manual upgrade to obtain this behavior. No periodic/background checks run.

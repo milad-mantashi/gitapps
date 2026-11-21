@@ -5,6 +5,12 @@ minor releases may change behavior; patch releases contain compatible fixes.
 The Python `__version__` constant is the source of truth for the CLI and DEB builder.
 DEB versions append a packaging revision (for example, `0.2.0-1`).
 
+## 0.3.0 — 2026-11-21
+
+- Track GitApps itself by default and detect the running version.
+- Offer interactive self-update DEB downloads; never install automatically.
+- Check asset size and SHA-256 when GitHub provides a digest.
+
 ## 0.2.0 — 2026-11-21
 
 - Add `gitapps --version`.

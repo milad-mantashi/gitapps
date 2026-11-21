@@ -8,13 +8,14 @@ import os
 import tempfile
 import shutil
 import subprocess
+import hashlib
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 def repository(value):
     if value.startswith('https://'):
@@ -62,6 +63,8 @@ PACKAGE_NAMES = {'happ-proxy/happ-desktop': 'happ'}
 
 def detect_installed(repo):
     """Discover an executable matching the repository name; never run shell text."""
+    if repo.lower() == 'milad-mantashi/gitapps':
+        return __version__, 'Running GitApps version'
     name = PACKAGE_NAMES.get(repo.lower(), repo.split('/')[1])
     # Reject option-like names and path components before executing anything.
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]*', name):
@@ -131,6 +134,70 @@ def save_state(data):
             os.unlink(temporary)
 
 
+def offer_self_download(release):
+    """Offer a DEB download in interactive terminals; never install it."""
+    if not sys.stdin.isatty():
+        print('Action:     Open the release link to download the new GitApps version.')
+        return
+    architecture = run_local(['dpkg', '--print-architecture'])
+    assets = release.get('assets', [])
+    candidates = [asset for asset in assets if isinstance(asset, dict)
+                  and re.fullmatch(r'gitapps_[0-9A-Za-z.+~-]+_' + re.escape(architecture or '?') + r'\.deb', asset.get('name', ''))]
+    if len(candidates) != 1:
+        print('Action:     No unique DEB for this architecture; use the release page.')
+        return
+    asset = candidates[0]
+    url = asset.get('browser_download_url', '')
+    parsed = urlparse(url)
+    if parsed.scheme != 'https' or parsed.netloc != 'github.com' or not parsed.path.startswith('/milad-mantashi/gitapps/releases/download/'):
+        print('Error: Invalid download URL.', file=sys.stderr)
+        return
+    print(f'Download:   {asset["name"]} ({asset.get("size", "unknown")} bytes)')
+    try:
+        answer = input('Download the GitApps update? [y/N] ').strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print('\nDownload cancelled.')
+        return
+    if answer not in {'y', 'yes'}:
+        print('Download skipped.')
+        return
+    destination = Path.home() / 'Downloads' / 'gitapps'
+    temporary = None
+    try:
+        destination.mkdir(parents=True, exist_ok=True)
+        target = destination / asset['name']
+        if target.exists():
+            print(f'File already exists; not overwritten: {target}')
+            return
+        digest = hashlib.sha256()
+        size = 0
+        with tempfile.NamedTemporaryFile(dir=destination, delete=False) as stream:
+            temporary = stream.name
+            with urlopen(Request(url, headers={'User-Agent': 'gitapps-checker'}), timeout=30) as response:
+                while chunk := response.read(1024 * 1024):
+                    stream.write(chunk)
+                    digest.update(chunk)
+                    size += len(chunk)
+        if asset.get('size') is not None and size != asset['size']:
+            raise ValueError('Download size mismatch')
+        expected = asset.get('digest')
+        if expected and expected != 'sha256:' + digest.hexdigest():
+            raise ValueError('Download checksum mismatch or unsupported digest')
+        # Exclusive creation prevents overwriting files, including a concurrent download.
+        with open(temporary, 'rb') as source, target.open('xb') as output:
+            shutil.copyfileobj(source, output)
+        print(f'Downloaded: {target}')
+        print('SHA256:     ' + digest.hexdigest())
+        if not expected:
+            print('Warning: Publisher checksum unavailable; only size was checked.')
+        print('Install manually: sudo apt install ' + str(target))
+    except (OSError, URLError, ValueError) as error:
+        print(f'Download failed: {error}', file=sys.stderr)
+    finally:
+        if temporary:
+            Path(temporary).unlink(missing_ok=True)
+
+
 def check_release(repo, current=None):
     detected, source = detect_installed(repo)
     current = detected or current
@@ -167,6 +234,8 @@ def check_release(repo, current=None):
     print(f'Release:    https://github.com/{repo}/releases/latest')
     if status == 'Update available':
         print(f'Action:     A new version is available. Download it from https://github.com/{repo}/releases/latest')
+        if repo.lower() == 'milad-mantashi/gitapps':
+            offer_self_download(release)
     elif not current:
         print('Action:     Latest release shown above; installed version is unknown, so an update cannot be confirmed.')
     return 0
