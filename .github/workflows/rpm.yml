@@ -1,10 +1,12 @@
 name: Fedora standalone RPM
 on:
+  release:
+    types: [published]
   workflow_dispatch:
   push:
     tags: ['v*']
 permissions:
-  contents: read
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,3 +26,8 @@ jobs:
         with:
           name: gitapps-fedora-rpm
           path: dist/*.rpm
+      - name: Attach packages to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/upload_release.py
