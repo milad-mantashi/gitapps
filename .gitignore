@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.agents/
+.codex/
+.aws/
+PROJECT_BRIEF.txt
