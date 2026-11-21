@@ -6,3 +6,5 @@ __pycache__/
 .codex/
 .aws/
 PROJECT_BRIEF.txt
+
+dist/

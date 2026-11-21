@@ -14,6 +14,8 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 
+__version__ = "0.2.0"
+
 def repository(value):
     if value.startswith('https://'):
         parsed = urlparse(value)
@@ -172,6 +174,7 @@ def check_release(repo, current=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--version', action='version', version=f'gitapps {__version__}')
     sub = parser.add_subparsers(dest='command', required=True)
     add = sub.add_parser('add', help='Save a GitHub repository for future checks')
     add.add_argument('repository', type=repository)

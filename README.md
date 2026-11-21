@@ -1,5 +1,7 @@
 # GitApps
 
+**Version 0.2.0** · [راهنمای سادهٔ فارسی](README.fa.md) · [Version history](CHANGELOG.md)
+
 A small Python terminal tool that checks installed applications against stable GitHub Releases and prints a download link when an update is available. Open-source and closed-source applications distributed through GitHub Releases are supported.
 
 **Early version:** Linux-first. Checks and notifications only; it does not download or install updates, run a background service, or replace APT.
@@ -84,3 +86,51 @@ Contributions are welcome: include a reproducible example, installed package/exe
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Versioning and Debian package
+
+Current application version: **0.2.0**. Run `gitapps --version`.
+See [CHANGELOG.md](CHANGELOG.md) for the version policy and changes.
+
+Build a DEB on Debian/Ubuntu with Python 3.10+ and `dpkg-deb` (from `dpkg`):
+
+```bash
+python3 scripts/build_deb.py
+sudo apt install ./dist/gitapps_0.2.0-1_all.deb
+/usr/bin/gitapps --version
+```
+
+The package is architecture-independent (`all`) and installs to `/usr/lib/gitapps`
+with the command `/usr/bin/gitapps`. No pip packages are needed. It does not install
+or upgrade any of the apps you track. Subsequent DEBs can be upgraded with the same
+`apt install ./...deb` command; no GitApps APT repository is provided yet.
+
+If you previously used `install.py`, `~/.local/bin/gitapps` may take precedence.
+Inspect `command -v gitapps` and `ls -l ~/.local/bin/gitapps`; remove that old symlink
+only if it belongs to GitApps, then run `hash -r` to use the packaged command.
+The DEB intentionally does not modify files in users' home directories.
+
+Remove the package with `sudo apt remove gitapps`. Your tracking configuration stays
+in your user configuration directory. Release files and build outputs belong in
+`dist/`; source installs can still use `python3 install.py`.
+
+### Standalone DEB (bundled Python)
+
+The standalone variant bundles the Python interpreter and standard library using
+PyInstaller. End users do not need Python or pip; the DEB declares no package
+Dependencies. Building it requires PyInstaller, which is a build-time dependency:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install pyinstaller==6.16.0
+.venv/bin/python scripts/build_deb.py --standalone
+sudo apt install ./dist/gitapps_0.2.0-1_amd64.deb
+```
+
+This is an architecture-specific Linux package. It still relies on the operating
+system's glibc and basic system libraries; it is not a universal static binary.
+Build on the oldest supported distribution. The supplied workflow is configured to build on
+Ubuntu 22.04 for amd64 and test installation; its first successful run must be
+verified before claiming support for that environment. The locally tested binary
+was built on Ubuntu 26.04 (glibc 2.43), not on Ubuntu 22.04. DEB version detection uses the
+system's dpkg-query; CLI detection uses the installed application's own command.
